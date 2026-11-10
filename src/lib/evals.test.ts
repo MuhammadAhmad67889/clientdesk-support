@@ -41,10 +41,10 @@ describe("runEvalScenarios", () => {
     });
 
     const summary = await runEvalScenarios();
-    expect(summary.total).toBe(8);
-    expect(summary.passed).toBe(8);
+    expect(summary.total).toBe(9);
+    expect(summary.passed).toBe(9);
     expect(summary.failed).toBe(0);
-    expect(prisma.evalRun.create).toHaveBeenCalledTimes(8);
+    expect(prisma.evalRun.create).toHaveBeenCalledTimes(9);
   });
 
   it("records a failure when the agent cites the wrong source", async () => {

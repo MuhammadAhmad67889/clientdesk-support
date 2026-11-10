@@ -122,6 +122,13 @@ export const kbPassages: KbPassage[] = [
     keywords: ["export", "data", "delete", "account", "remove", "download"],
   },
   {
+    id: "how-to-use-clientdesk",
+    title: "How to use ClientDesk",
+    body: "ClientDesk keeps your freelance clients, invoices, and payments in one private account. Sign up free — new accounts start with demo data you can explore or delete. Add a client, create an invoice with line items, then record each payment as it arrives. The dashboard shows what you have been paid, what is still outstanding, and what is overdue. You can export clients as a CSV and download any invoice as a one-page PDF.",
+    source: "ClientDesk home page",
+    keywords: ["use", "using", "how", "start", "getting", "started", "tool", "help", "work", "does", "begin", "guide"],
+  },
+  {
     id: "contact-support",
     title: "Contact support",
     body: "You can reach the ClientDesk team at muhammadahmad.codes@gmail.com.",

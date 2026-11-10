@@ -37,6 +37,10 @@ export const evalScenarios: { question: string; expectedSource: string }[] =
       question: "How do I record a partial payment?",
       expectedSource: "ClientDesk invoice page",
     },
+    {
+      question: "How do I use ClientDesk?",
+      expectedSource: "ClientDesk home page",
+    },
     // No passage covers these, so the honest answer is "I don't know".
     { question: "What is the weather today?", expectedSource: "" },
     { question: "Is there a dark mode?", expectedSource: "" },
