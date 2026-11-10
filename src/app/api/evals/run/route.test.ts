@@ -46,9 +46,9 @@ describe("POST /api/evals/run", () => {
       failed: number;
       results: { passed: boolean }[];
     };
-    expect(data.total).toBe(8);
-    expect(data.passed).toBe(8);
+    expect(data.total).toBe(9);
+    expect(data.passed).toBe(9);
     expect(data.failed).toBe(0);
-    expect(data.results).toHaveLength(8);
+    expect(data.results).toHaveLength(9);
   });
 });
