@@ -6,9 +6,10 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
       <h1 className="text-2xl font-bold">ClientDesk Support Agent</h1>
       <p className="max-w-md text-sm text-zinc-600 dark:text-zinc-400">
-        A support agent for ClientDesk users. M2 is done: the chat answers
-        from the knowledge base, quoting the help pages. Tickets and the
-        admin inbox land in M4.
+        A support agent for ClientDesk users. All six milestones are
+        done: the chat answers from the knowledge base, tickets go to a
+        human in the admin inbox, and analytics and scripted evals keep
+        the answers honest.
       </p>
       <a
         className="rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
