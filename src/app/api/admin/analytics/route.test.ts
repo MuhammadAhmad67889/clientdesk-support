@@ -28,6 +28,7 @@ describe("GET /api/admin/analytics", () => {
         role: "user",
         body: "What is the free plan limit?",
         citations: [],
+        mode: "demo",
         createdAt: new Date(),
       },
       {
@@ -36,6 +37,7 @@ describe("GET /api/admin/analytics", () => {
         role: "agent",
         body: "The Free plan allows 10 clients and 30 invoices.",
         citations: ["ClientDesk pricing page"],
+        mode: "demo",
         createdAt: new Date(),
       },
     ]);
