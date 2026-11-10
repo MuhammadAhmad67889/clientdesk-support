@@ -17,9 +17,10 @@ export async function addMessage(
   role: "user" | "agent" | "human",
   body: string,
   citations: string[] = [],
+  mode: "demo" | "live" = "demo",
 ) {
   return prisma.message.create({
-    data: { conversationId, role, body, citations },
+    data: { conversationId, role, body, citations, mode },
   });
 }
 

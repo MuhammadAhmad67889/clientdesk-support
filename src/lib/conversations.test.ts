@@ -106,6 +106,7 @@ describe("addHumanReply", () => {
       role: "human",
       body: "Let me check that for you.",
       citations: [],
+      mode: "demo",
       createdAt: new Date(),
     });
 
@@ -120,6 +121,7 @@ describe("addHumanReply", () => {
         role: "human",
         body: "Let me check that for you.",
         citations: [],
+        mode: "demo",
       },
     });
     expect(prisma.ticket.update).toHaveBeenCalledWith({
