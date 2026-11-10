@@ -34,6 +34,11 @@ describe("searchKb", () => {
     expect(results[0].passage.id).toBe("record-payment");
   });
 
+  it("finds the how-to-use passage for a general use question", () => {
+    const results = searchKb("How do I use it?", kbPassages);
+    expect(results[0].passage.id).toBe("how-to-use-clientdesk");
+  });
+
   it("returns nothing for a question about something else entirely", () => {
     expect(searchKb("What is the weather today?", kbPassages)).toEqual([]);
     expect(searchKb("Tell me a joke", kbPassages)).toEqual([]);
