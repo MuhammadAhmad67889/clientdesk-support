@@ -55,10 +55,17 @@ export const demoProvider: LlmProvider = {
 const groqEndpoint = "https://api.groq.com/openai/v1/chat/completions";
 
 // The model used for live answers. Overridable with GROQ_MODEL; the
-// default is a model on Groq's free tier. (llama-3.3-70b-versatile was
-// the original default, but Groq retired it — it now answers 404.)
+// default is a model on Groq's free tier. Picked by a head-to-head test
+// (2026-11-10) of the three chat models Groq offers this key —
+// gpt-oss-20b, gpt-oss-120b and qwen3.8-27b — on four grounded
+// questions (CSV export, free-plan limits, forgotten password, and
+// scheduled payments, which does not exist): all three answered
+// correctly with no invented facts, but qwen was the fastest
+// (~325ms vs ~580ms / ~740ms) and used the fewest tokens per answer
+// (~260 vs ~420 / ~460). (llama-3.3-70b-versatile was the original
+// default, but Groq retired it — it now answers 404.)
 function groqModel(): string {
-  return process.env.GROQ_MODEL ?? "openai/gpt-oss-20b";
+  return process.env.GROQ_MODEL ?? "qwen/qwen3.8-27b";
 }
 
 function groqSystemPrompt(passages: KbPassage[]): string {

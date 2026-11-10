@@ -77,7 +77,7 @@ describe("groqProvider", () => {
       model: string;
       messages: { role: string; content: string }[];
     };
-    expect(body.model).toBe("openai/gpt-oss-20b");
+    expect(body.model).toBe("qwen/qwen3.8-27b");
     expect(body.messages[0].role).toBe("system");
     expect(body.messages[0].content).toContain("10 clients and 30 invoices");
     expect(body.messages[1]).toEqual({
