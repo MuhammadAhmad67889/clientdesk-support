@@ -10,7 +10,7 @@ Live demo: https://clientdesk-support.vercel.app
 
 - **Chat** (`/chat`) — asks the knowledge base and answers with citations. Suggested questions included; embeddable on any page with `public/widget.js`.
 - **Demo mode (default, no key)** — the answer is the matching help passage, quoted word for word. It generates no text.
-- **Live mode (Groq, needs a key)** — a real answer grounded in the retrieved passages. The model is told to answer only from those passages, and any source it names that was not in the passages is dropped.
+- **Live mode (Groq)** — a real answer grounded in the retrieved passages. The model is told to answer only from those passages, and any source it names that was not in the passages is dropped. Switched on for the deployed app via the `GROQ_API_KEY` env var in Vercel (Production).
 - **Tickets** — "Still stuck? Open a ticket for a human" turns a conversation into a ticket with the full transcript. Tickets opened after an unanswered question are marked escalated.
 - **Admin inbox** (`/admin`) — open tickets first, full transcript, human replies (the user sees them when they reopen the chat), mark resolved.
 - **Analytics** (`/admin/analytics`) — questions, answer rate, top questions, and the questions the agent could not answer (those are the gaps in the help pages).
