@@ -38,6 +38,7 @@ describe("POST /api/admin/tickets/[id]/reply", () => {
       role: "human",
       body: "On it.",
       citations: [],
+      mode: "demo",
       createdAt: new Date(),
     });
 
