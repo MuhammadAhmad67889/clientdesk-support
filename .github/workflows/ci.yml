@@ -39,6 +39,10 @@ jobs:
       - run: npx prisma migrate deploy
       - run: npm run db:seed
       - run: npm run lint
+      # Generates next-env.d.ts and .next/types (LayoutProps, route
+      # types). A fresh checkout has neither, and tsc fails without
+      # them — that is why this runs before tsc, not after.
+      - run: npx next typegen
       - run: npx tsc --noEmit
       - run: npm test
       - run: npm run build
