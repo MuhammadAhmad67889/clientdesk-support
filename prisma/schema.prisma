@@ -1,0 +1,76 @@
+// Prisma schema for the ClientDesk support agent.
+//
+// Every table here is used by a planned milestone, but the database
+// itself is only touched once a feature reads or writes it (M2 chat
+// history, M4 tickets). M1 only ships the knowledge base as data
+// (src/lib/kb.ts) plus the keyword search over it (src/lib/retrieval.ts).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// One passage of real ClientDesk help content. The agent may only
+// answer from these passages, and every answer cites its source.
+model KbPassage {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  source    String
+  keywords  String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  messages  Message[]
+  tickets   Ticket[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+  // user | agent | human (a human reply from the admin inbox)
+  role           String
+  body           String
+  // Sources cited for this answer, if any.
+  citations      String[]
+  createdAt      DateTime     @default(now())
+}
+
+model Ticket {
+  id             String       @id @default(cuid())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+  // open | pending | resolved
+  status         String       @default("open")
+  escalated      Boolean      @default(false)
+  resolvedAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model EvalScenario {
+  id             String    @id @default(cuid())
+  question       String
+  expectedSource String
+  runs           EvalRun[]
+  createdAt      DateTime  @default(now())
+}
+
+model EvalRun {
+  id         String       @id @default(cuid())
+  scenario   EvalScenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  scenarioId String
+  passed     Boolean
+  answer     String
+  createdAt  DateTime     @default(now())
+}
