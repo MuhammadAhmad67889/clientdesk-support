@@ -52,6 +52,7 @@ function ChatPage() {
             role: "user" | "agent" | "human";
             body: string;
             citations: string[];
+            mode?: "demo" | "live";
           }[];
         } | null) => {
           if (cancelled || !data) return;
@@ -61,6 +62,7 @@ function ChatPage() {
               role: message.role,
               text: message.body,
               citations: message.citations,
+              mode: message.mode,
             })),
           );
         },
@@ -95,6 +97,12 @@ function ChatPage() {
       };
       if (data.conversationId && data.conversationId !== conversationId) {
         setConversationId(data.conversationId);
+        // The messages are already on screen with the right mode, so
+        // mark the conversation as reopened: when the URL update
+        // below changes ?conversation=, the reopen effect must not
+        // refetch the transcript and overwrite them (the stored
+        // messages are what the label is read from).
+        reopenedRef.current = true;
         // Put the conversation in the URL (keeping ?embed=1 when the
         // widget opened it), so a reload, bookmark, or the back button
         // reopens this same chat — and its human replies.
