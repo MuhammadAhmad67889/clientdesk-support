@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type ChatMessage = {
   role: "user" | "agent" | "human";
@@ -20,6 +20,7 @@ const suggestedQuestions = [
 
 function ChatPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   // When embedded on another page (for example the ClientDesk site),
   // the widget loader adds ?embed=1 and the page title is hidden.
   const embedded = searchParams.get("embed") === "1";
@@ -34,9 +35,13 @@ function ChatPage() {
   const [ticketId, setTicketId] = useState<string | null>(null);
   const [ticketBusy, setTicketBusy] = useState(false);
 
-  // Reopen a past conversation once, on first load.
+  // Reopen a past conversation once, on first load. The ref stops the
+  // effect re-running when our own URL update (below) changes the
+  // ?conversation= value — the messages are already on screen then.
+  const reopenedRef = useRef(false);
   useEffect(() => {
-    if (!reopenId) return;
+    if (!reopenId || reopenedRef.current) return;
+    reopenedRef.current = true;
     let cancelled = false;
     fetch(`/api/chat?conversationId=${encodeURIComponent(reopenId)}`)
       .then((response) => (response.ok ? response.json() : null))
@@ -88,7 +93,15 @@ function ChatPage() {
         conversationId?: string | null;
         error?: string;
       };
-      if (data.conversationId) setConversationId(data.conversationId);
+      if (data.conversationId && data.conversationId !== conversationId) {
+        setConversationId(data.conversationId);
+        // Put the conversation in the URL (keeping ?embed=1 when the
+        // widget opened it), so a reload, bookmark, or the back button
+        // reopens this same chat — and its human replies.
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("conversation", data.conversationId);
+        router.replace(`/chat?${params.toString()}`);
+      }
       setMessages((prev) => [
         ...prev,
         {
