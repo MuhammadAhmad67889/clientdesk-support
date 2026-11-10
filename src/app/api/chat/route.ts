@@ -60,7 +60,13 @@ export async function POST(request: Request) {
       conversationId = (await createConversation()).id;
     }
     await addMessage(conversationId, "user", question);
-    await addMessage(conversationId, "agent", answer.answer, answer.citations);
+    await addMessage(
+      conversationId,
+      "agent",
+      answer.answer,
+      answer.citations,
+      answer.mode,
+    );
   } catch (error) {
     console.error("Could not store the chat exchange:", error);
     conversationId = null;
@@ -94,6 +100,7 @@ export async function GET(request: Request) {
       role: message.role,
       body: message.body,
       citations: message.citations,
+      mode: message.mode,
     })),
   });
 }

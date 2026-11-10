@@ -50,6 +50,7 @@ describe("POST /api/chat", () => {
       role: "agent",
       body: "answer",
       citations: [],
+      mode: "demo",
       createdAt: new Date(),
     });
 
@@ -70,6 +71,10 @@ describe("POST /api/chat", () => {
     expect(data.answer).toContain("10 clients and 30 invoices");
     expect(data.citations).toEqual(["ClientDesk pricing page"]);
     expect(data.conversationId).toBe("conv-1");
+    // The stored agent message keeps the mode, so reopening the chat
+    // shows the same label the answer had on screen.
+    const storedAgent = vi.mocked(prisma.message.create).mock.calls[1][0];
+    expect(storedAgent.data.mode).toBe("demo");
   });
 
   it("reuses an existing conversation instead of creating one", async () => {
@@ -82,6 +87,7 @@ describe("POST /api/chat", () => {
       role: "agent",
       body: "answer",
       citations: [],
+      mode: "demo",
       createdAt: new Date(),
     });
 
@@ -122,6 +128,7 @@ describe("POST /api/chat", () => {
       role: "agent",
       body: "answer",
       citations: [],
+      mode: "demo",
       createdAt: new Date(),
     });
 
@@ -171,6 +178,7 @@ describe("GET /api/chat", () => {
           role: "user",
           body: "What is the free plan limit?",
           citations: [],
+          mode: "demo",
           createdAt: new Date(),
         },
         {
@@ -179,6 +187,7 @@ describe("GET /api/chat", () => {
           role: "agent",
           body: "The Free plan allows 10 clients and 30 invoices.",
           citations: ["ClientDesk pricing page"],
+          mode: "live",
           createdAt: new Date(),
         },
       ],
@@ -196,11 +205,17 @@ describe("GET /api/chat", () => {
 
     const data = (await response.json()) as {
       id: string;
-      messages: { role: string; body: string; citations: string[] }[];
+      messages: {
+        role: string;
+        body: string;
+        citations: string[];
+        mode: string;
+      }[];
     };
     expect(data.id).toBe("conv-1");
     expect(data.messages).toHaveLength(2);
     expect(data.messages[1].citations).toEqual(["ClientDesk pricing page"]);
+    expect(data.messages[1].mode).toBe("live");
   });
 
   it("returns 400 without a conversationId and 404 for an unknown one", async () => {
