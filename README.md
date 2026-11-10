@@ -2,6 +2,8 @@
 
 A support agent for [ClientDesk](https://github.com/MuhammadAhmad67889/clientdesk) users. Ask a question, get an answer quoted from the real help pages with its source. When the agent cannot answer, it says so and offers a ticket — a human picks it up in the admin inbox.
 
+Live demo: https://clientdesk-support.vercel.app
+
 ![Chat](docs/screenshots/chat.png)
 
 ## What it does
