@@ -86,6 +86,59 @@ function groqSystemPrompt(passages: KbPassage[]): string {
   );
 }
 
+// One attempt at a live answer: a single call to Groq with its own
+// 30-second timeout. Throws on a bad status, an empty answer, or a
+// network failure, so the caller can decide whether to try again.
+async function groqAttempt(
+  apiKey: string,
+  question: string,
+  passages: KbPassage[],
+): Promise<LlmAnswer> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+  try {
+    const response = await fetch(groqEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: groqModel(),
+        messages: [
+          { role: "system", content: groqSystemPrompt(passages) },
+          { role: "user", content: question },
+        ],
+        temperature: 0,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Groq API returned ${response.status}.`);
+    }
+
+    const data = (await response.json()) as {
+      choices?: { message?: { content?: string } }[];
+    };
+    const text = data.choices?.[0]?.message?.content?.trim() ?? "";
+    if (!text) {
+      throw new Error("Groq API returned an empty answer.");
+    }
+
+    // Keep only sources the model named that were actually in the
+    // passages it was given. Anything else is a hallucination.
+    const knownSources = new Set(passages.map((p) => p.source));
+    const citations = [...knownSources].filter((source) =>
+      text.includes(source),
+    );
+
+    return { answer: text, citations, matched: true, mode: "live" };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export const groqProvider: LlmProvider = {
   name: "groq",
   generate: async (question, passages) => {
@@ -106,49 +159,32 @@ export const groqProvider: LlmProvider = {
       };
     }
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30_000);
-    try {
-      const response = await fetch(groqEndpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: groqModel(),
-          messages: [
-            { role: "system", content: groqSystemPrompt(passages) },
-            { role: "user", content: question },
-          ],
-          temperature: 0,
-        }),
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Groq API returned ${response.status}.`);
+    // A fast failure (a Groq blip, or a rate-limit hit) gets one
+    // retry after a short pause — the chat should not fall back to
+    // the demo answer over a single hiccup. A timed-out attempt is
+    // not retried: the chat would rather fall back to demo than
+    // make the user wait a minute. Every failure is logged, so a
+    // run of demo answers can be traced in the server logs instead
+    // of failing silently.
+    let lastError: unknown = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (attempt > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
-
-      const data = (await response.json()) as {
-        choices?: { message?: { content?: string } }[];
-      };
-      const text = data.choices?.[0]?.message?.content?.trim() ?? "";
-      if (!text) {
-        throw new Error("Groq API returned an empty answer.");
+      try {
+        return await groqAttempt(apiKey, question, passages);
+      } catch (error) {
+        lastError = error;
+        console.error(
+          `Groq live answer failed (attempt ${attempt + 1} of 2):`,
+          error,
+        );
+        if (error instanceof Error && error.name === "AbortError") break;
       }
-
-      // Keep only sources the model named that were actually in the
-      // passages it was given. Anything else is a hallucination.
-      const knownSources = new Set(passages.map((p) => p.source));
-      const citations = [...knownSources].filter((source) =>
-        text.includes(source),
-      );
-
-      return { answer: text, citations, matched: true, mode: "live" };
-    } finally {
-      clearTimeout(timeout);
     }
+    throw lastError instanceof Error
+      ? lastError
+      : new Error("Groq API call failed.");
   },
 };
 

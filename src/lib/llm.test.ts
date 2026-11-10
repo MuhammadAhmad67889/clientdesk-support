@@ -109,11 +109,48 @@ describe("groqProvider", () => {
 
   it("throws when Groq answers with an error status", async () => {
     process.env.GROQ_API_KEY = "test-key";
-    vi.stubGlobal("fetch", mockGroqReply("", false, 401));
+    const fetchMock = mockGroqReply("", false, 401);
+    vi.stubGlobal("fetch", fetchMock);
 
     await expect(
       groqProvider.generate("What is the free plan limit?", kbPassages),
     ).rejects.toThrow("Groq API returned 401");
+    // The failed call was retried once before giving up.
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries once after a fast failure and answers live", async () => {
+    process.env.GROQ_API_KEY = "test-key";
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        json: async () => ({}),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          choices: [
+            {
+              message: {
+                content:
+                  "The Free plan allows 10 clients and 30 invoices.\nSources: ClientDesk pricing page",
+              },
+            },
+          ],
+        }),
+      }) as Mock;
+    vi.stubGlobal("fetch", fetchMock);
+
+    const answer = await groqProvider.generate(
+      "What is the free plan limit?",
+      kbPassages,
+    );
+    expect(answer.mode).toBe("live");
+    expect(answer.answer).toContain("10 clients and 30 invoices");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("does not call the model when no passage matched", async () => {
