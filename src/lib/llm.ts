@@ -55,9 +55,10 @@ export const demoProvider: LlmProvider = {
 const groqEndpoint = "https://api.groq.com/openai/v1/chat/completions";
 
 // The model used for live answers. Overridable with GROQ_MODEL; the
-// default is a model on Groq's free tier.
+// default is a model on Groq's free tier. (llama-3.3-70b-versatile was
+// the original default, but Groq retired it — it now answers 404.)
 function groqModel(): string {
-  return process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
+  return process.env.GROQ_MODEL ?? "openai/gpt-oss-20b";
 }
 
 function groqSystemPrompt(passages: KbPassage[]): string {
