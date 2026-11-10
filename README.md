@@ -1,43 +1,72 @@
 # ClientDesk Support Agent
 
-A support agent for people using [ClientDesk](https://github.com/MuhammadAhmad67889/clientdesk), my client and invoice manager for freelance work. A user asks a question in plain words and gets an answer drawn from the real ClientDesk help content, with the source shown. When the agent cannot answer, or the user asks for a person, it opens a ticket with the full transcript, and I answer it from an admin inbox.
+A support agent for [ClientDesk](https://github.com/MuhammadAhmad67889/clientdesk) users. Ask a question, get an answer quoted from the real help pages with its source. When the agent cannot answer, it says so and offers a ticket — a human picks it up in the admin inbox.
 
-## Where it stands
+![Chat](docs/screenshots/chat.png)
 
-**M2 done:** the chat. The chat page (`/chat`) answers from the knowledge base with the demo responder, showing each answer's source, and the widget loader (`public/widget.js`) embeds it on any page. M1 (knowledge base + search) is under it: 16 passages of real ClientDesk content (`src/lib/kb.ts`), keyword search (`src/lib/retrieval.ts`), 13 tests. Tickets and the admin inbox land in M4.
+## What it does
+
+- **Chat** (`/chat`) — asks the knowledge base and answers with citations. Suggested questions included; embeddable on any page with `public/widget.js`.
+- **Demo mode (default, no key)** — the answer is the matching help passage, quoted word for word. It generates no text.
+- **Live mode (Groq, needs a key)** — a real answer grounded in the retrieved passages. The model is told to answer only from those passages, and any source it names that was not in the passages is dropped.
+- **Tickets** — "Still stuck? Open a ticket for a human" turns a conversation into a ticket with the full transcript. Tickets opened after an unanswered question are marked escalated.
+- **Admin inbox** (`/admin`) — open tickets first, full transcript, human replies (the user sees them when they reopen the chat), mark resolved.
+- **Analytics** (`/admin/analytics`) — questions, answer rate, top questions, and the questions the agent could not answer (those are the gaps in the help pages).
+- **Scripted evals** (`/admin/evals`) — 8 fixed questions with expected sources, run through the agent in demo mode, pass/fail recorded.
 
 ## Honest rules
 
-- The agent only answers from the knowledge base, and every answer cites its source. If nothing matches, it says so and offers a ticket. It never invents an answer.
-- The knowledge base only states what ClientDesk actually does. Features that are built but not switched on yet (password-reset email, Google/GitHub sign-in, billing) say so in plain words.
-- **Demo mode (default, no key needed):** answers quote the help pages verbatim and say they are demo answers.
-- **Live mode:** a real LLM answer grounded in the retrieved passages. Needs a `GROQ_API_KEY` env var (Groq free tier). The key is never in chat and never committed.
+- The knowledge base (`src/lib/kb.ts`, 16 passages) is built only from real ClientDesk facts: the free plan is 10 clients / 30 invoices; Pro $9 and Business $19 are planned but billing is not set up, so nobody can pay yet; password reset and Google/GitHub sign-in are built but not switched on; demo data is 3 clients + 5 invoices.
+- The agent never invents. If nothing matches, it says so.
+- An opened ticket is never counted as answered.
+- There is **no login on the admin pages in v1** — protect `/admin` (Vercel Deployment Protection, or auth) before sharing the app widely.
 
-## Run it
+## Run it locally
 
 ```bash
 npm install
-npm run dev        # http://localhost:3000
-npm test           # vitest
+npm run dev
+```
+
+Needs a Postgres database for conversations, tickets, analytics, and evals:
+
+```bash
+cp .env.example .env   # fill in DATABASE_URL
+npm run db:generate
+npm run db:migrate     # applies the migrations
+npm run db:seed        # 16 knowledge base passages + 8 eval scenarios
+```
+
+The chat answers work without a database — storage is best-effort, so if the database is down the question is still answered (the conversation just is not saved).
+
+```bash
+npm test        # vitest (55 tests)
 npm run lint
 npx tsc --noEmit
 npm run build
 ```
 
-Database (needed from M2, when the app first reads/writes it):
+## Live answers (optional)
 
 ```bash
-# .env — local Postgres, same as ClientDesk
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/clientdesk_support?schema=public"
-npm run db:generate   # generate the Prisma client
-npm run db:migrate    # apply migrations
-npm run db:seed       # seed the knowledge base passages
+GROQ_API_KEY="..."   # free key from https://console.groq.com
+# GROQ_MODEL="llama-3.3-70b-versatile"  # the default
 ```
+
+Without the key the app runs in demo mode. Live answers are verified with mocked API calls in the tests, not against the real Groq API (no key in the repo).
+
+## Deploy
+
+Vercel, from this repo. Set `DATABASE_URL` (a Neon Postgres database works) and, for live answers, `GROQ_API_KEY`. The build runs `prisma migrate deploy` first (see `vercel.json`), so the tables exist before the app starts. The knowledge base seed runs in CI against its own Postgres; on a fresh live database, run `npm run db:seed` once with the live `DATABASE_URL` to fill the passages and eval scenarios tables (the chat reads the passages from code, so it works before the seed too).
+
+## Where it stands
+
+**M1–M6 done.** M1: knowledge base + keyword search. M2: chat + demo responder + widget. M3: live Groq provider. M4: tickets + admin inbox. M5: analytics + scripted evals. M6: this README, screenshots, and the live deploy.
 
 ## Stack
 
-Next.js 16 + TypeScript (strict), React 19, Tailwind v4, Prisma 6 + Postgres (Neon free in production), Vitest, GitHub Actions CI, Vercel deploy.
+Next.js 16 + TypeScript (strict) + Tailwind v4 + Prisma 6 + Postgres. Prisma is pinned to 6.19.3 — the npm latest (8 RC) restructured the CLI and has no `generate`/`migrate` commands. Tests run in Vitest (node env); the database-backed paths are tested with a mocked Prisma client, and the real database path runs in CI (postgres service) on every push.
 
 ## Code style
 
-Small functions with clear names, comments only where they explain why, no clever one-liners. A bug should be easy to trace.
+Small functions with clear names, comments only where they explain why, plain wording, no clever one-liners. A bug should be easy to trace.
