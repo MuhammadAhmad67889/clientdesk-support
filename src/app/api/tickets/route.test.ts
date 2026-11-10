@@ -37,6 +37,7 @@ describe("POST /api/tickets", () => {
           role: "user",
           body: "What is the weather today?",
           citations: [],
+          mode: "demo",
           createdAt: new Date(),
         },
         {
@@ -45,6 +46,7 @@ describe("POST /api/tickets", () => {
           role: "agent",
           body: "I couldn't find an answer to that in the ClientDesk help pages.",
           citations: [],
+          mode: "demo",
           createdAt: new Date(),
         },
       ],
