@@ -43,6 +43,9 @@ model Message {
   body           String
   // Sources cited for this answer, if any.
   citations      String[]
+  // demo | live — how the answer was produced. The chat page shows a
+  // different label for each, so reopening a conversation must keep it.
+  mode           String       @default("demo")
   createdAt      DateTime     @default(now())
 }
 
